@@ -2,6 +2,8 @@
 using MtClient;
 using MtApi5.MtProtocol;
 using MtApi5.MtProtocol.ICustomRequest;
+using System.Data;
+using Mt5Api;
 
 namespace MtApi5
 {
@@ -398,6 +400,23 @@ namespace MtApi5
         public int OrdersTotal()
         {
             return SendCommand<int>(ExecutorHandle, Mt5CommandType.OrdersTotal);
+        }
+
+        ///<summary>
+        ///Return all orders in the pool.
+        ///</summary>
+        public List<Mt5Order>? GetOrders(OrderSelectSource pool)
+        {
+            Dictionary<string, object> cmdParams = new() { { "Pool", (int)pool } };
+            return SendCommand<List<Mt5Order>>(ExecutorHandle, Mt5CommandType.GetOrders, cmdParams);
+        }
+
+        ///<summary>
+        ///Return all position in the pool.
+        ///</summary>
+        public List<Mt5Position>? GetPositions()
+        {
+            return SendCommand<List<Mt5Position>>(ExecutorHandle, Mt5CommandType.GetPositions);
         }
 
         ///<summary>

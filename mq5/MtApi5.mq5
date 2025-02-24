@@ -178,6 +178,7 @@ int preinit()
    ADD_EXECUTOR(9, PositionGetDouble);
    ADD_EXECUTOR(10, PositionGetInteger);
    ADD_EXECUTOR(11, PositionGetString);
+   ADD_EXECUTOR(1000, GetOrders);
    ADD_EXECUTOR(12, OrdersTotal);
    ADD_EXECUTOR(13, OrderGetTicket);
    ADD_EXECUTOR(14, OrderSelect);
@@ -246,7 +247,7 @@ int preinit()
    ADD_EXECUTOR(56, SymbolInfoString);
    ADD_EXECUTOR(1056, SymbolInfoString2);
    ADD_EXECUTOR(57, SymbolInfoTick);
-   ADD_EXECUTOR(58, SymbolInfoSessionQuote); 
+   ADD_EXECUTOR(58, SymbolInfoSessionQuote);
    ADD_EXECUTOR(59, SymbolInfoSessionTrade);
    ADD_EXECUTOR(60, MarketBookAdd);
    ADD_EXECUTOR(61, MarketBookRelease);
@@ -380,7 +381,7 @@ int preinit()
    ADD_EXECUTOR(303, OrderCheck);
    ADD_EXECUTOR(304, Buy);
    ADD_EXECUTOR(305, Sell);
-   
+
    return (0);
 }
 
@@ -393,29 +394,29 @@ bool IsDemo()
 }
 
 bool IsTesting()
-{  
+{
    bool isTesting = MQLInfoInteger(MQL_TESTER);
    return isTesting;
 }
 
-int init() 
+int init()
 {
-   preinit();  
+   preinit();
 
-   if (TerminalInfoInteger(TERMINAL_DLLS_ALLOWED) == false) 
+   if (TerminalInfoInteger(TERMINAL_DLLS_ALLOWED) == false)
    {
       MessageBox("Dlls not allowed.", "MtApi", 0);
       isCrashed = true;
       return (1);
    }
-   if (MQL5InfoInteger(MQL5_DLLS_ALLOWED) == false) 
+   if (MQL5InfoInteger(MQL5_DLLS_ALLOWED) == false)
    {
       MessageBox("Libraries not allowed.", "MtApi", 0);
       isCrashed = true;
       return (1);
    }
 
-   if (MQL5InfoInteger(MQL5_TRADE_ALLOWED) == false) 
+   if (MQL5InfoInteger(MQL5_TRADE_ALLOWED) == false)
    {
       MessageBox("Trade not allowed.", "MtApi", 0);
       isCrashed = true;
@@ -424,52 +425,52 @@ int init()
 
    long chartID = ChartID();
    ExpertHandle = (int) ChartGetInteger(chartID, CHART_WINDOW_HANDLE);
-   
+
    if (!initExpert(ExpertHandle, Port, _error))
    {
        MessageBox(_error, "MtApi", 0);
        isCrashed = true;
        return(1);
    }
-   
+
    if (executeCommand() == 1)
-   {   
+   {
       isCrashed = true;
       return (1);
    }
-   
+
 #ifdef __DEBUG_LOG__
    PrintFormat("Expert Handle = %d", ExpertHandle);
    PrintFormat("IsTesting: %s", IsTesting() ? "true" : "false");
 #endif
-   
+
    //--- Backtesting mode
     if (IsTesting())
-    {      
+    {
        Print("Waiting on remote client...");
        //wait for command (BacktestingReady) from remote side to be ready for work
        while(!IsRemoteReadyForTesting)
        {
           executeCommand();
-          
+
           //This section uses a while loop to simulate Sleep() during Backtest.
           unsigned int viSleepUntilTick = GetTickCount() + 100; //100 milliseconds
-          while(GetTickCount() < viSleepUntilTick) 
+          while(GetTickCount() < viSleepUntilTick)
           {
              //Do absolutely nothing. Just loop until the desired tick is reached.
           }
        }
     }
-   //--- 
+   //---
 
    return (0);
 }
 
-int deinit() 
+int deinit()
 {
-   if (isCrashed == 0) 
+   if (isCrashed == 0)
    {
-      if (!deinitExpert(ExpertHandle, _error)) 
+      if (!deinitExpert(ExpertHandle, _error))
       {
          MessageBox(_error, "MtApi", 0);
          isCrashed = true;
@@ -477,7 +478,7 @@ int deinit()
       }
       Print("Expert was deinitialized.");
    }
-   
+
    //--- clear and delete all values from map
    int keys[];
    CExecutorWrapper *values[];
@@ -489,7 +490,7 @@ int deinit()
          delete values[i];
    }
    _executors.Clear();
-   
+
    return (0);
 }
 
@@ -498,10 +499,10 @@ void OnTimer()
    while(true)
    {
       int executedCommand = executeCommand();
-      
+
       if (_is_ticks_locked)
          continue;
-      
+
       if (executedCommand == 0)
          break;
    }
@@ -519,14 +520,14 @@ int executeCommand()
 
    if (commandType == 0)
       return 0;
-   
+
 #ifdef __DEBUG_LOG__
    Print("executeCommand: commnad type = ", commandType);
-#endif 
+#endif
 
    string response;
    CExecutorWrapper *wrapper;
-   if (_executors.TryGetValue(commandType, wrapper)) 
+   if (_executors.TryGetValue(commandType, wrapper))
    {
       response = wrapper.Execute();
    }
@@ -535,10 +536,10 @@ int executeCommand()
       Print("WARNING: Unknown command type = ", commandType);
       response = CreateErrorResponse(-1, "Unknown command type");
    }
-   
+
    if (!sendResponse(ExpertHandle, response, _error))
       PrintFormat("[ERROR] response: %s", _error);
-   
+
    return (commandType);
 }
 
@@ -549,10 +550,10 @@ class auto_ptr
 public:
    T_ *p;
    void reset() { if (this.p) delete this.p; this.p = NULL;}
-   
+
    auto_ptr(void *ptr = NULL): p(ptr) {}
    ~auto_ptr()  { this.reset(); }
-   
+
    void swap(auto_ptr<T_> &other)
    {
       T_ *buf = this.p;
@@ -565,7 +566,7 @@ JSONObject* GetJsonPayload()
 {
    string payload;
    StringInit(payload, 5000, 0);
-   
+
    if (!getPayload(ExpertHandle, payload, _error))
    {
       PrintFormat("%s [ERROR]: %s", __FUNCTION__, _error);
@@ -574,13 +575,13 @@ JSONObject* GetJsonPayload()
 
    JSONParser payload_parser;
    JSONValue *payload_json = payload_parser.parse(payload);
-   
-   if (payload_json == NULL) 
-   {   
+
+   if (payload_json == NULL)
+   {
       PrintFormat("%s [ERROR]: %d - %s", __FUNCTION__, (string)payload_parser.getErrorCode(), payload_parser.getErrorMessage());
       return NULL;
    }
-   
+
    return payload_json.isObject() ? payload_json : NULL;
 }
 
@@ -600,7 +601,7 @@ string Execute_GetQuote()
 {
    MqlTick tick;
    SymbolInfoTick(Symbol(), tick);
-   
+
    MtQuote quote(Symbol(), tick);
    return CreateSuccessResponse(quote.CreateJson());
 }
@@ -618,14 +619,14 @@ string Execute_OrderCalcMargin()
    GET_STRING_JSON_VALUE(jo, "Symbol", symbol);
    GET_DOUBLE_JSON_VALUE(jo, "Volume", volume);
    GET_DOUBLE_JSON_VALUE(jo, "Price", price);
-   
+
    double margin;
    bool ok = OrderCalcMargin((ENUM_ORDER_TYPE)action, symbol, volume, price, margin);
-   
-#ifdef __DEBUG_LOG__   
+
+#ifdef __DEBUG_LOG__
    PrintFormat("%s: return value = %s", __FUNCTION__, ok ? "true" : "false");
-#endif                  
-   
+#endif
+
    JSONObject* result_value_jo = new JSONObject();
    result_value_jo.put("RetVal", new JSONBool(ok));
    result_value_jo.put("Result", new JSONNumber(margin));
@@ -640,20 +641,20 @@ string Execute_OrderCalcProfit()
    GET_STRING_JSON_VALUE(jo, "Symbol", symbol);
    GET_DOUBLE_JSON_VALUE(jo, "Volume", volume);
    GET_DOUBLE_JSON_VALUE(jo, "PriceOpen", price_open);
-   GET_DOUBLE_JSON_VALUE(jo, "PriceClose", price_close);   
-   
+   GET_DOUBLE_JSON_VALUE(jo, "PriceClose", price_close);
+
    double profit;
    bool ok = OrderCalcProfit((ENUM_ORDER_TYPE)action, symbol, volume, price_open, price_close, profit);
-            
-#ifdef __DEBUG_LOG__   
+
+#ifdef __DEBUG_LOG__
    PrintFormat("%s: return value = %s", __FUNCTION__, ok ? "true" : "false");
-#endif                  
-   
+#endif
+
    JSONObject* result_value_jo = new JSONObject();
    result_value_jo.put("RetVal", new JSONBool(ok));
    result_value_jo.put("Result", new JSONNumber(profit));
 
-   return CreateSuccessResponse(result_value_jo);   
+   return CreateSuccessResponse(result_value_jo);
 }
 
 string Execute_PositionGetTicket()
@@ -671,12 +672,12 @@ string Execute_PositionGetTicket()
    PrintFormat("%s: result = %u", __FUNCTION__, result);
 #endif
 
-   return CreateSuccessResponse(new JSONNumber(result));   
+   return CreateSuccessResponse(new JSONNumber(result));
 }
 
 string Execute_PositionsTotal()
 {
-   int result = PositionsTotal();  
+   int result = PositionsTotal();
    return CreateSuccessResponse(new JSONNumber(result));
 }
 
@@ -684,7 +685,7 @@ string Execute_PositionGetSymbol()
 {
    GET_JSON_PAYLOAD(jo);
    GET_INT_JSON_VALUE(jo, "Index", index);
-   
+
    string symbol = PositionGetSymbol(index);
    return CreateSuccessResponse(new JSONString(symbol));
 }
@@ -693,7 +694,7 @@ string Execute_PositionSelect()
 {
    GET_JSON_PAYLOAD(jo);
    GET_STRING_JSON_VALUE(jo, "Symbol", symbol);
-   
+
    bool ok = PositionSelect(symbol);
    return CreateSuccessResponse(new JSONBool(ok));
 }
@@ -702,7 +703,7 @@ string Execute_PositionGetDouble()
 {
    GET_JSON_PAYLOAD(jo);
    GET_INT_JSON_VALUE(jo, "PropertyId", property_id);
-      
+
    double result = PositionGetDouble((ENUM_POSITION_PROPERTY_DOUBLE)property_id);
    return CreateSuccessResponse(new JSONNumber(result));
 }
@@ -711,7 +712,7 @@ string Execute_PositionGetInteger()
 {
    GET_JSON_PAYLOAD(jo);
    GET_INT_JSON_VALUE(jo, "PropertyId", property_id);
-   
+
    long result = PositionGetInteger((ENUM_POSITION_PROPERTY_INTEGER)property_id);
    return CreateSuccessResponse(new JSONNumber(result));
 }
@@ -720,15 +721,66 @@ string Execute_PositionGetString()
 {
    GET_JSON_PAYLOAD(jo);
    GET_INT_JSON_VALUE(jo, "PropertyId", property_id);
-   
+
    string result = PositionGetString((ENUM_POSITION_PROPERTY_STRING)property_id);
-   return CreateSuccessResponse(new JSONString(result));   
+   return CreateSuccessResponse(new JSONString(result));
 }
 
 string Execute_OrdersTotal()
 {
    int result = OrdersTotal();
    return CreateSuccessResponse(new JSONNumber(result));
+}
+
+string Execute_GetOrders()
+{
+   GET_JSON_PAYLOAD(jo);
+   GET_INT_JSON_VALUE(jo, "Pool", pool);
+
+   int total = OrdersTotal();
+
+   JSONArray* joOrders = new JSONArray();
+   for(int pos = 0; pos < total; pos++)
+   {
+      if (OrderSelect(OrderGetTicket(pos)))
+      {
+         JSONObject* joOrder = new JSONObject();
+
+         // Integer Properties
+         joOrder.put("ORDER_TICKET", new JSONNumber(OrderGetInteger(ORDER_TICKET)));
+         joOrder.put("ORDER_TIME_SETUP", new JSONNumber(OrderGetInteger(ORDER_TIME_SETUP)));
+         joOrder.put("ORDER_TYPE", new JSONNumber(OrderGetInteger(ORDER_TYPE)));
+         joOrder.put("ORDER_STATE", new JSONNumber(OrderGetInteger(ORDER_STATE)));
+         joOrder.put("ORDER_TIME_EXPIRATION", new JSONNumber(OrderGetInteger(ORDER_TIME_EXPIRATION)));
+         joOrder.put("ORDER_TIME_DONE", new JSONNumber(OrderGetInteger(ORDER_TIME_DONE)));
+         joOrder.put("ORDER_TIME_SETUP_MSC", new JSONNumber(OrderGetInteger(ORDER_TIME_SETUP_MSC)));
+         joOrder.put("ORDER_TIME_DONE_MSC", new JSONNumber(OrderGetInteger(ORDER_TIME_DONE_MSC)));
+         joOrder.put("ORDER_TYPE_FILLING", new JSONNumber(OrderGetInteger(ORDER_TYPE_FILLING)));
+         joOrder.put("ORDER_TYPE_TIME", new JSONNumber(OrderGetInteger(ORDER_TYPE_TIME)));
+         joOrder.put("ORDER_MAGIC", new JSONNumber(OrderGetInteger(ORDER_MAGIC)));
+         joOrder.put("ORDER_REASON", new JSONNumber(OrderGetInteger(ORDER_REASON)));
+         joOrder.put("ORDER_POSITION_ID", new JSONNumber(OrderGetInteger(ORDER_POSITION_ID)));
+         joOrder.put("ORDER_POSITION_BY_ID", new JSONNumber(OrderGetInteger(ORDER_POSITION_BY_ID)));
+
+         // Double Properties
+         joOrder.put("ORDER_VOLUME_INITIAL", new JSONNumber(OrderGetDouble(ORDER_VOLUME_INITIAL)));
+         joOrder.put("ORDER_VOLUME_CURRENT", new JSONNumber(OrderGetDouble(ORDER_VOLUME_CURRENT)));
+         joOrder.put("ORDER_PRICE_OPEN", new JSONNumber(OrderGetDouble(ORDER_PRICE_OPEN)));
+         joOrder.put("ORDER_SL", new JSONNumber(OrderGetDouble(ORDER_SL)));
+         joOrder.put("ORDER_TP", new JSONNumber(OrderGetDouble(ORDER_TP)));
+         joOrder.put("ORDER_PRICE_CURRENT", new JSONNumber(OrderGetDouble(ORDER_PRICE_CURRENT)));
+         joOrder.put("ORDER_PRICE_STOPLIMIT", new JSONNumber(OrderGetDouble(ORDER_PRICE_STOPLIMIT)));
+
+         // String Properties
+         joOrder.put("ORDER_SYMBOL", new JSONString(OrderGetString(ORDER_SYMBOL)));
+         joOrder.put("ORDER_COMMENT", new JSONString(OrderGetString(ORDER_COMMENT)));
+         joOrder.put("ORDER_EXTERNAL_ID", new JSONString(OrderGetString(ORDER_EXTERNAL_ID)));
+
+         joOrders.put(pos, joOrder);
+      }
+   }
+
+   return CreateSuccessResponse(joOrders);
 }
 
 string Execute_OrderGetTicket()

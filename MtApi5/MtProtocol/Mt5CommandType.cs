@@ -18,6 +18,8 @@ namespace MtApi5.MtProtocol
         PositionGetString = 11,
         PositionGetTicket = 4,
         OrdersTotal = 12,
+        GetOrders = 1000,
+        GetPositions = 1001,
         OrderGetTicket = 13,
         OrderSelect = 14,
         OrderGetDouble = 15,
