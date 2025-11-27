@@ -82,7 +82,7 @@ void OnTick()
            MqlRates rates_array[];
            CopyRates(symbol, Period(), 1, 1, rates_array);
       
-           MtTimeBarEvent time_bar(symbol, rates_array[0]);
+           MtTimeBarEvent time_bar(Period(), symbol, rates_array[0]);
            SendMtEvent(ON_LAST_TIME_BAR_EVENT, time_bar);
          }
         lastbar_time_changed = true;
@@ -2909,11 +2909,15 @@ string Execute_ChartWindowFind()
 
 string Execute_TerminalInfoString()
 {
-   GET_JSON_PAYLOAD(jo);
-   GET_INT_JSON_VALUE(jo, "PropertyId", propertyId);
-   
-   string result = TerminalInfoString((ENUM_TERMINAL_INFO_STRING)propertyId);
-   return CreateSuccessResponse(new JSONString(result));
+    GET_JSON_PAYLOAD(jo);
+
+    GET_INT_JSON_VALUE(jo, "PropertyId", propertyId);
+
+    string result = TerminalInfoString((ENUM_TERMINAL_INFO_STRING)propertyId);
+
+    string escapedResult = StringReplace(result, "\\", "\\\\");
+
+    return CreateSuccessResponse(new JSONString(result));
 }
 
 string Execute_GlobalVariableTemp()
@@ -3662,8 +3666,9 @@ private:
 class MtTimeBarEvent: public MtObject
 {
 public:
-   MtTimeBarEvent(string symbol, const MqlRates& rates)
+   MtTimeBarEvent(int period, string symbol, const MqlRates& rates)
    {
+      _period = period;
       _symbol = symbol;
       _rates = rates;
    }
@@ -3673,11 +3678,13 @@ public:
       JSONObject *jo = new JSONObject();
       jo.put("Rates", MqlRatesToJson(_rates));
       jo.put("Instrument", new JSONString(_symbol));
+      jo.put("PeriodInMinutes", new JSONString(_period));
       jo.put("ExpertHandle", new JSONNumber(ExpertHandle));
       return jo;
    }
 
 private: 
+   int _period;
    string _symbol;
    MqlRates _rates;
 };
