@@ -2960,6 +2960,7 @@ string Execute_UnlockTicks()
       return CreateErrorResponse(-1, "UnlockTicks can be used only for backtesting");
    }
    
+   _is_ticks_locked = false;
    return CreateSuccessResponse();
 }
 
