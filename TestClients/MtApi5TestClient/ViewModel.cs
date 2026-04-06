@@ -163,6 +163,8 @@ namespace MtApi5TestClient
 
         public DelegateCommand GetSymbolsCommand { get; private set; }
         public DelegateCommand RefreshQuotesCommand { get; private set; }
+
+        public DelegateCommand TimeoutApplyCommand { get; private set; }
         #endregion
 
         #region Properties
@@ -207,6 +209,17 @@ namespace MtApi5TestClient
             {
                 _port = value;
                 OnPropertyChanged("Port");
+            }
+        }
+
+        private int _command_timeout;
+        public int CommandTimeout
+        {
+            get { return _command_timeout; }
+            set
+            {
+                _command_timeout = value;
+                OnPropertyChanged("CommandTimeout");
             }
         }
 
@@ -350,6 +363,7 @@ namespace MtApi5TestClient
             ConnectionState = _mtApiClient.ConnectionState;
             ConnectionMessage = "Disconnected";
             Port = 8228; //default local port
+            CommandTimeout = _mtApiClient.CommandTimeout;
 
             InitCommands();
 
@@ -494,6 +508,8 @@ namespace MtApi5TestClient
 
             GetSymbolsCommand = new DelegateCommand(ExecuteGetSymbols);
             RefreshQuotesCommand = new DelegateCommand(ExecuteRefreshQuotes);
+
+            TimeoutApplyCommand = new DelegateCommand(ExecuteTimeoutApply);
         }
 
         private bool CanExecuteConnect(object o)
@@ -1771,6 +1787,12 @@ namespace MtApi5TestClient
                     AddQuote(quote);
                 }
             }
+        }
+
+        private void ExecuteTimeoutApply(object o)
+        {
+            _mtApiClient.CommandTimeout = CommandTimeout;
+            AddLog($"TimeoutApply: timeout = {CommandTimeout} milliseconds");
         }
 
         private static void RunOnUiThread(Action action)
