@@ -3546,7 +3546,7 @@ namespace MtApi5
             var e = JsonConvert.DeserializeObject<OnLastTimeBarEvent>(payload);
             if (e == null || string.IsNullOrEmpty(e.Instrument) || e.Rates == null)
                 return;
-            OnLastTimeBar?.Invoke(this, new Mt5TimeBarArgs(expertHandle, e.Instrument, e.Rates));
+            OnLastTimeBar?.Invoke(this, new Mt5TimeBarArgs(expertHandle, e.Instrument, e.Timeframe, e.Rates));
         }
 
         private void ReceivedOnLockTicksEvent(int expertHandle, string payload)
