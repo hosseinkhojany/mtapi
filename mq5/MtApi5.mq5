@@ -82,7 +82,7 @@ void OnTick()
            MqlRates rates_array[];
            CopyRates(symbol, Period(), 1, 1, rates_array);
       
-           MtTimeBarEvent time_bar(symbol, rates_array[0]);
+           MtTimeBarEvent time_bar(symbol, (int)Period(), rates_array[0]);
            SendMtEvent(ON_LAST_TIME_BAR_EVENT, time_bar);
          }
         lastbar_time_changed = true;
@@ -2960,6 +2960,7 @@ string Execute_UnlockTicks()
       return CreateErrorResponse(-1, "UnlockTicks can be used only for backtesting");
    }
    
+   _is_ticks_locked = false;
    return CreateSuccessResponse();
 }
 
@@ -3662,9 +3663,10 @@ private:
 class MtTimeBarEvent: public MtObject
 {
 public:
-   MtTimeBarEvent(string symbol, const MqlRates& rates)
+   MtTimeBarEvent(string symbol, int timeframe, const MqlRates& rates)
    {
       _symbol = symbol;
+      _timeframe = timeframe;
       _rates = rates;
    }
    
@@ -3673,12 +3675,14 @@ public:
       JSONObject *jo = new JSONObject();
       jo.put("Rates", MqlRatesToJson(_rates));
       jo.put("Instrument", new JSONString(_symbol));
+      jo.put("Timeframe", new JSONNumber(_timeframe));
       jo.put("ExpertHandle", new JSONNumber(ExpertHandle));
       return jo;
    }
 
 private: 
    string _symbol;
+   int _timeframe;
    MqlRates _rates;
 };
 
