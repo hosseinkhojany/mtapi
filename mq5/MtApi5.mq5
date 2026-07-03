@@ -4057,17 +4057,29 @@ bool JsonToMqlRates(JSONObject* jo, MqlRates& rates)
 {
    if (jo == NULL) return false;
 
-   long time;
-   if (!jo.getLong("mt_time", time)) return false;
-   rates.time = (datetime)time;
+   if (jo.getValue("mt_time") == NULL) return false;
+   rates.time = (datetime)jo.getLong("mt_time");
 
-   if (!jo.getDouble("open", rates.open)) return false;
-   if (!jo.getDouble("high", rates.high)) return false;
-   if (!jo.getDouble("low", rates.low)) return false;
-   if (!jo.getDouble("close", rates.close)) return false;
-   if (!jo.getLong("tick_volume", rates.tick_volume)) return false;
-   if (!jo.getInt("spread", rates.spread)) return false;
-   if (!jo.getLong("real_volume", rates.real_volume)) return false;
+   if (jo.getValue("open") == NULL) return false;
+   rates.open = jo.getDouble("open");
+
+   if (jo.getValue("high") == NULL) return false;
+   rates.high = jo.getDouble("high");
+
+   if (jo.getValue("low") == NULL) return false;
+   rates.low = jo.getDouble("low");
+
+   if (jo.getValue("close") == NULL) return false;
+   rates.close = jo.getDouble("close");
+
+   if (jo.getValue("tick_volume") == NULL) return false;
+   rates.tick_volume = jo.getLong("tick_volume");
+
+   if (jo.getValue("spread") == NULL) return false;
+   rates.spread = jo.getInt("spread");
+
+   if (jo.getValue("real_volume") == NULL) return false;
+   rates.real_volume = jo.getLong("real_volume");
 
    return true;
 }
@@ -4091,27 +4103,34 @@ bool JsonToMqlTick(JSONObject* jo, MqlTick& tick)
 {
    if (jo == NULL) return false;
 
-   long time;
-   if (!jo.getLong("Time", time)) return false;
-   long time_msc;
-   if (!jo.getLong("TimeMsc", time_msc)) return false;
+   if (jo.getValue("Time") == NULL) return false;
+   long time = jo.getLong("Time");
+
+   if (jo.getValue("TimeMsc") == NULL) return false;
+   long time_msc = jo.getLong("TimeMsc");
+
    if (time_msc == 0 && time != 0) time_msc = time * 1000;
    if (time == 0 && time_msc != 0) time = time_msc / 1000;
    tick.time = (datetime)time;
    tick.time_msc = time_msc;
 
-   if (!jo.getDouble("Bid", tick.bid)) return false;
-   if (!jo.getDouble("Ask", tick.ask)) return false;
-   if (!jo.getDouble("Last", tick.last)) return false;
-   if (!jo.getDouble("VolumeReal", tick.volume_real)) return false;
+   if (jo.getValue("Bid") == NULL) return false;
+   tick.bid = jo.getDouble("Bid");
 
-   long volume;
-   if (!jo.getLong("Volume", volume)) return false;
-   tick.volume = (ulong)volume;
+   if (jo.getValue("Ask") == NULL) return false;
+   tick.ask = jo.getDouble("Ask");
 
-   long flags;
-   if (!jo.getLong("Flags", flags)) return false;
-   tick.flags = (uint)flags;
+   if (jo.getValue("Last") == NULL) return false;
+   tick.last = jo.getDouble("Last");
+
+   if (jo.getValue("VolumeReal") == NULL) return false;
+   tick.volume_real = jo.getDouble("VolumeReal");
+
+   if (jo.getValue("Volume") == NULL) return false;
+   tick.volume = (ulong)jo.getLong("Volume");
+
+   if (jo.getValue("Flags") == NULL) return false;
+   tick.flags = (uint)jo.getLong("Flags");
 
    return true;
 }
