@@ -153,8 +153,17 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
       PrintFormat("%s: id = %d", __FUNCTION__, id);
     #endif
 
+    // JSONString::toString() in json.mqh performs no escaping, so escape sparam manually
+    // (backslash first, then quote and control characters) to keep the event JSON valid.
+    string escaped_sparam = sparam;
+    StringReplace(escaped_sparam, "\\", "\\\\");
+    StringReplace(escaped_sparam, "\"", "\\\"");
+    StringReplace(escaped_sparam, "\n", "\\n");
+    StringReplace(escaped_sparam, "\r", "\\r");
+    StringReplace(escaped_sparam, "\t", "\\t");
+
     // Custom events sent with EventChartCustom arrive with id = CHARTEVENT_CUSTOM (1000) + custom event id.
-    MtOnChartEvent chart_event(id, lparam, dparam, sparam);
+    MtOnChartEvent chart_event(id, lparam, dparam, escaped_sparam);
     SendMtEvent(ON_CHART_EVENT, chart_event);
 }
 
