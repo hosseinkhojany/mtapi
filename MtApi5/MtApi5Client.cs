@@ -1057,12 +1057,12 @@ namespace MtApi5
         ///<param name="timeframe">Period.</param>
         ///<param name="startPos">The start position for the first element to copy.</param>
         ///<param name="count">Data count to copy.</param>
-        public async Task<MqlRates[]?> CopyRatesAsync(string symbolName, ENUM_TIMEFRAMES timeframe, int startPos, int count)
+        public async Task<MqlRates[]> CopyRatesAsync(string symbolName, ENUM_TIMEFRAMES timeframe, int startPos, int count)
         {
             Dictionary<string, object> cmdParams = new() { { "Symbol", symbolName ?? string.Empty }, { "Timeframe", (int)timeframe },
                 { "StartPos", startPos }, { "Count", count } };
             var response = await SendCommandAsync<List<MqlRates>>(ExecutorHandle, Mt5CommandType.CopyRates, cmdParams).ConfigureAwait(false);
-            return response?.ToArray();
+            return response?.ToArray() ?? [];
         }
 
         ///<summary>
@@ -1089,12 +1089,12 @@ namespace MtApi5
         ///<param name="timeframe">Period.</param>
         ///<param name="startTime">The start time for the first element to copy.</param>
         ///<param name="count">Data count to copy.</param>
-        public async Task<MqlRates[]?> CopyRatesAsync(string symbolName, ENUM_TIMEFRAMES timeframe, DateTime startTime, int count)
+        public async Task<MqlRates[]> CopyRatesAsync(string symbolName, ENUM_TIMEFRAMES timeframe, DateTime startTime, int count)
         {
             Dictionary<string, object> cmdParams = new() { { "Symbol", symbolName ?? string.Empty }, { "Timeframe", (int)timeframe },
                 { "StartTime",  Mt5TimeConverter.ConvertToMtTime(startTime) }, { "Count", count } };
             var response = await SendCommandAsync<List<MqlRates>>(ExecutorHandle, Mt5CommandType.CopyRates1, cmdParams).ConfigureAwait(false);
-            return response?.ToArray();
+            return response?.ToArray() ?? [];
         }
 
         ///<summary>
@@ -1122,13 +1122,13 @@ namespace MtApi5
         ///<param name="timeframe">Period.</param>
         ///<param name="startTime">The start time for the first element to copy.</param>
         ///<param name="stopTime">Bar time, corresponding to the last element to copy.</param>
-        public async Task<MqlRates[]?> CopyRatesAsync(string symbolName, ENUM_TIMEFRAMES timeframe, DateTime startTime, DateTime stopTime)
+        public async Task<MqlRates[]> CopyRatesAsync(string symbolName, ENUM_TIMEFRAMES timeframe, DateTime startTime, DateTime stopTime)
         {
             Dictionary<string, object> cmdParams = new() { { "Symbol", symbolName ?? string.Empty }, { "Timeframe", (int)timeframe },
                 { "StartTime",  Mt5TimeConverter.ConvertToMtTime(startTime) },
                 { "StopTime", Mt5TimeConverter.ConvertToMtTime(stopTime) } };
             var response = await SendCommandAsync<List<MqlRates>>(ExecutorHandle, Mt5CommandType.CopyRates2, cmdParams).ConfigureAwait(false);
-            return response?.ToArray();
+            return response?.ToArray() ?? [];
         }
 
         ///<summary>
