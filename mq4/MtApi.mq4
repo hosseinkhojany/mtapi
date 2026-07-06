@@ -566,14 +566,18 @@ int ExecuteCommand()
 
    StringInit(_command_payload, 5000, 0);
    int required = getCommandInfo(ExpertHandle, command_type, _command_payload, 5000, _error);
-   if (required < 0)
-   {
-      Print("[ERROR] ExecuteCommand: Failed to get command info! ", _error);
-      return (0);
-   }
 
    if (command_type == 0)
       return 0;
+
+   if (required < 0)
+   {
+      //--- the command was already popped (command_type is set) but its payload
+      //--- could not be converted: dispatch with an empty payload so the handler
+      //--- still sends an error response instead of leaving the client waiting
+      Print("[ERROR] ExecuteCommand: Failed to get command info! ", _error);
+      _command_payload = "";
+   }
 
    if (required >= 5000)
    {
