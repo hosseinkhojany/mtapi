@@ -285,6 +285,17 @@ namespace MtApi5.MtProtocol
         OrderModify = 324,
         OrderDelete = 325,
 
-        EventChartCustom = 385
+        EventChartCustom = 385,
+        CustomSymbolCreate = 340,
+        CustomSymbolDelete = 341,
+        CustomSymbolSetDouble = 342,
+        CustomSymbolSetInteger = 343,
+        CustomSymbolSetString = 344,
+        CustomRatesDelete = 345,
+        CustomRatesReplace = 346,
+        CustomRatesUpdate = 347,
+        CustomTicksAdd = 348,
+        CustomTicksDelete = 349,
+        CustomTicksReplace = 350
     }
 }
