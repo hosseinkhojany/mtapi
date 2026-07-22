@@ -276,6 +276,13 @@ namespace MtApi5.MtProtocol
         TesterDeposit = 370,
         TesterWithdrawal = 371,
 
-        SymbolInfoMarginRate = 380
+        SymbolInfoMarginRate = 380,
+
+        BuyLimit = 320,
+        SellLimit = 321,
+        BuyStop = 322,
+        SellStop = 323,
+        OrderModify = 324,
+        OrderDelete = 325
     }
 }
