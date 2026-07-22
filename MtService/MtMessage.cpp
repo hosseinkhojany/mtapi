@@ -38,7 +38,7 @@ std::unique_ptr<MtCommand> MtCommand::Parse(const std::string& msg)
     return command;
 }
 
-std::unique_ptr<MtNotification> MtNotification::Parse(const std::string& msg)
+std::unique_ptr<MtServiceRequest> MtServiceRequest::Parse(const std::string& msg)
 {
     std::string::size_type pos = msg.find(';');
 
@@ -47,17 +47,17 @@ std::unique_ptr<MtNotification> MtNotification::Parse(const std::string& msg)
     using rule = qi::rule<std::string::const_iterator>;
 
     std::string message_type;
-    std::string notification_type;
+    std::string request_type;
 
     rule_s word_p = qi::as_string[+(qi::char_ - qi::char_(';'))];
     rule message_type_p = word_p[boost::phoenix::ref(message_type) = qi::_1];
-    rule notification_type_p = +qi::char_(';') >> word_p[boost::phoenix::ref(notification_type) = qi::_1];
+    rule notification_type_p = +qi::char_(';') >> word_p[boost::phoenix::ref(request_type) = qi::_1];
 
-    std::unique_ptr<MtNotification> command;
+    std::unique_ptr<MtServiceRequest> request;
 
     bool ok = qi::parse(msg.begin(), msg.end(), message_type_p >> -notification_type_p);
     if (ok)
-        command = std::make_unique<MtNotification>((NotificationType)std::stoi(notification_type));
+        request = std::make_unique<MtServiceRequest>((ServiceRequestType)std::stoi(request_type));
 
-    return command;
+    return request;
 }

@@ -288,12 +288,12 @@ void MtServer::ProcessMessage(const std::string& msg, std::weak_ptr<MtConnection
         else
             log_.Warning("%s: Failed to parse command from message: %s", __FUNCTION__, msg.c_str());
     }
-    else if (msg_type == MessageType::NOTIFICATION)
+    else if (msg_type == MessageType::SERVICE_REQUEST)
     {
-        auto notification = MtNotification::Parse(msg);
-        if (notification)
+        auto request = MtServiceRequest::Parse(msg);
+        if (request)
         {
-            if (notification->GetNotificationType() == NotificationType::CLIENT_READY)
+            if (request->GetServiceRequestType() == ServiceRequestType::EXPERTS)
             {
                 std::vector<int> expert_list;
                 for (const auto& e : experts_)
@@ -306,7 +306,7 @@ void MtServer::ProcessMessage(const std::string& msg, std::weak_ptr<MtConnection
             }
         }
         else
-            log_.Warning("%s: Failed to parse notification from message: %s", __FUNCTION__, msg.c_str());
+            log_.Warning("%s: Failed to parse service request from message: %s", __FUNCTION__, msg.c_str());
     }
     else
     {

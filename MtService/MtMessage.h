@@ -14,12 +14,12 @@ enum MessageType
     EXPERT_LIST = 3,
     EXPERT_ADDED = 4,
     EXPERT_REMOVED = 5,
-    NOTIFICATION = 6
+    SERVICE_REQUEST = 6
 };
 
-enum NotificationType
+enum ServiceRequestType
 {
-    CLIENT_READY = 0
+    EXPERTS = 0
 };
 
 class MtMessage
@@ -111,25 +111,25 @@ private:
     std::string payload_;
 };
 
-class MtNotification : public MtMessage
+class MtServiceRequest : public MtMessage
 {
 public:
-    MtNotification(NotificationType type)
-        : notification_type_(type)
+    MtServiceRequest(ServiceRequestType type)
+        : request_type_(type)
     {
     }
 
-    NotificationType GetNotificationType() const
+    ServiceRequestType GetServiceRequestType() const
     {
-        return notification_type_;
+        return request_type_;
     }
 
-    static std::unique_ptr<MtNotification> Parse(const std::string& msg);
+    static std::unique_ptr<MtServiceRequest> Parse(const std::string& msg);
 
 private:
     MessageType GetType() const override
     {
-        return MessageType::NOTIFICATION;
+        return MessageType::SERVICE_REQUEST;
     }
 
     std::string GetBody() const override
@@ -137,7 +137,7 @@ private:
         return "";
     }
 
-    NotificationType notification_type_;
+    ServiceRequestType request_type_;
 };
 
 class MtEvent : public MtMessage 

@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using MtClient;
 using MtApi5.MtProtocol;
 using MtApi5.MtProtocol.ICustomRequest;
@@ -32,10 +32,23 @@ namespace MtApi5
         
         private HashSet<int> _experts = [];
         private Dictionary<int, Mt5Quote> _quotes = [];
+        private volatile int _command_timeout = 30000; // 30 seconds
         #endregion
 
         #region Public Methods
         private IMtLogger Log { get; }
+
+        // Time in milliseconds to wait for a response from MetaTrader for a command. Default is 30 seconds.
+        public int CommandTimeout
+        {
+            get => _command_timeout;
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentException("Command timeout must be greater than zero.");
+                _command_timeout = value;
+            }
+        }
 
         public MtApi5Client(IMtLogger? log = null)
         {
@@ -123,14 +136,7 @@ namespace MtApi5
                     throw new Exception($"Connection to {host}:{port} failed. Error: {errorMessage}");
                 }
 
-                // Load quotes
-                Dictionary<int, Mt5Quote> quotes = [];
-                foreach (var handle in experts)
-                {
-                    var quote = GetQuote(client, handle);
-                    if (quote != null)
-                        quotes[handle] = quote;
-                }
+                var quotes = LoadQuotes(client, experts);
 
                 lock (_locker)
                 {
@@ -160,6 +166,18 @@ namespace MtApi5
             }
         }
 
+        private Dictionary<int, Mt5Quote> LoadQuotes(MtRpcClient client, HashSet<int> experts)
+        {
+            Dictionary<int, Mt5Quote> quotes = [];
+            foreach (var handle in experts)
+            {
+                var quote = GetQuote(client, handle);
+                if (quote != null)
+                    quotes[handle] = quote;
+            }
+            return quotes;
+        }
+
         ///<summary>
         ///Disconnect from MetaTrader API. Async method.
         ///</summary>
@@ -183,10 +201,22 @@ namespace MtApi5
         ///</summary>
         public IEnumerable<Mt5Quote> GetQuotes()
         {
+            MtRpcClient? client;
+            HashSet<int> experts;
             lock (_locker)
             {
-                return _quotes.Values.ToList();
+                client = _client;
+                experts = new HashSet<int>(_experts);
             }
+            if (client == null)
+            {
+                Log.Warn("GetQuotes: No connection");
+                throw new Exception("No connection");
+            }
+
+            var quotes = LoadQuotes(client, experts);
+
+            return quotes.Values.ToList();
         }
 
         ///<summary>
@@ -3402,11 +3432,6 @@ namespace MtApi5
                 var quote = GetQuote(Client, handle);
                 if (quote != null)
                 {
-                    lock (_locker)
-                    {
-                        _quotes[handle] = quote;
-                    }
-
                     QuoteAdded?.Invoke(this, new Mt5QuoteEventArgs(quote));
                 }
                 else
@@ -3421,19 +3446,18 @@ namespace MtApi5
         {
             Log.Debug($"ProcessExpertRemoved: {handle}");
 
-            Mt5Quote? quote = null;
+            Mt5Quote? quote;
             lock (_locker)
             {
+                _quotes.TryGetValue(handle, out quote);
+                _quotes.Remove(handle);
                 _experts.Remove(handle);
-                if (_quotes.TryGetValue(handle, out quote))
-                    _quotes.Remove(handle);
                 if (_executorHandle == handle)
                     _executorHandle = (_experts.Count > 0) ? _experts.ElementAt(0) : 0;
-
             }
 
             if (quote != null)
-                QuoteRemoved?.Invoke(this, new Mt5QuoteEventArgs(quote));
+                QuoteRemoved?.Invoke(this, new Mt5QuoteEventArgs(new Mt5Quote { Instrument = quote.Instrument, ExpertHandle = quote.ExpertHandle }));
         }
 
         private Mt5Quote? GetQuote(MtRpcClient? client, int expertHandle)
@@ -3522,7 +3546,7 @@ namespace MtApi5
             var e = JsonConvert.DeserializeObject<OnLastTimeBarEvent>(payload);
             if (e == null || string.IsNullOrEmpty(e.Instrument) || e.Rates == null)
                 return;
-            OnLastTimeBar?.Invoke(this, new Mt5TimeBarArgs(expertHandle, e.Instrument, e.Rates, e.PeriodInMinutes));
+            OnLastTimeBar?.Invoke(this, new Mt5TimeBarArgs(expertHandle, e.Instrument, e.Timeframe, e.Rates));
         }
 
         private void ReceivedOnLockTicksEvent(int expertHandle, string payload)
@@ -3550,7 +3574,6 @@ namespace MtApi5
                 client = _client;
                 _client = null;
 
-                _quotes.Clear();
                 _experts.Clear();
                 _executorHandle = 0;
             }
@@ -3578,7 +3601,7 @@ namespace MtApi5
             var payloadJson = payload == null ? string.Empty : JsonConvert.SerializeObject(payload);
             Log.Debug($"SendCommand: sending '{payloadJson}' ...");
 
-            var responseJson = client.SendCommand(expertHandle, (int)commandType, payloadJson);
+            var responseJson = client.SendCommand(expertHandle, (int)commandType, payloadJson, CommandTimeout);
 
             Log.Debug($"SendCommand: received response JSON [{responseJson}]");
 

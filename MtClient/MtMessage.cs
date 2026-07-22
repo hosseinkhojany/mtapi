@@ -8,12 +8,12 @@
         ExpertList = 3,
         ExpertAdded = 4,
         ExpertRemoved = 5,
-        Notification = 6
+        ServiceRequest = 6
     }
 
-    internal enum MtNotificationType
+    internal enum ServiceRequestType
     {
-        ClientReady = 0
+        ExpertList = 0
     }
 
     internal abstract class MtMessage
@@ -43,16 +43,16 @@
         }
     }
 
-    internal class MtNotification(MtNotificationType notificationType) : MtMessage
+    internal class MtServiceRequest(ServiceRequestType requestType) : MtMessage
     {
-        public override MessageType MsgType => MessageType.Notification;
+        public override MessageType MsgType => MessageType.ServiceRequest;
 
         protected override string GetMessageBody()
         {
-            return $"{(int)NotificationType}";
+            return $"{(int)ServiceRequestType}";
         }
 
-        public MtNotificationType NotificationType { private set; get; } = notificationType;
+        public ServiceRequestType ServiceRequestType { private set; get; } = requestType;
     }
 
     internal class MtEvent(int expertHandle, int eventType, string payload) : MtMessage
