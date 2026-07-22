@@ -271,6 +271,9 @@ namespace MtApi5.MtProtocol
         CalendarValueHistoryByEvent = 313,
         CalendarValueHistory = 314,
         CalendarValueLastByEvent = 315,
-        CalendarValueLast = 316
+        CalendarValueLast = 316,
+
+        TesterDeposit = 370,
+        TesterWithdrawal = 371
     }
 }
