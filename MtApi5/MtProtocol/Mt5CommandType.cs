@@ -274,6 +274,8 @@ namespace MtApi5.MtProtocol
         CalendarValueLast = 316,
 
         TesterDeposit = 370,
-        TesterWithdrawal = 371
+        TesterWithdrawal = 371,
+
+        SymbolInfoMarginRate = 380
     }
 }
