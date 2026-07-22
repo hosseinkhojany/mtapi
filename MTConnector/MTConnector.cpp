@@ -122,3 +122,28 @@ _DLLAPI int _stdcall getPayload2(int expertHandle, wchar_t* res, int capacity, w
         return required;
         }, err, -1);
 }
+
+// Combined replacement for getCommandType + getPayload2: pops the next command
+// in a single call. type receives the command type (0 when the queue is empty)
+// and at most (capacity - 1) characters of its payload are copied into payload
+// (always null-terminated). Returns the full payload length in wchar_t
+// (excluding the null terminator), or -1 on error. If the returned length is
+// >= capacity, the caller should re-allocate its buffer and fetch the payload
+// again via getPayload2, which reads the already-popped command without
+// popping the queue again.
+_DLLAPI int _stdcall getCommandInfo(int expertHandle, int& type, wchar_t* payload, int capacity, wchar_t* err)
+{
+    return Execute<int>([&expertHandle, &type, payload, &capacity]() {
+        std::string payload_str;
+        MtService::GetInstance().GetCommandInfo(expertHandle, type, payload_str);
+        auto wstr = convertToWString(payload_str);
+        int required = static_cast<int>(wstr.length());
+        if (capacity > 0)
+        {
+            int len = required < capacity ? required : capacity - 1;
+            memcpy(payload, wstr.c_str(), static_cast<size_t>(len) * sizeof(wchar_t));
+            payload[len] = L'\0';
+        }
+        return required;
+        }, err, -1);
+}
